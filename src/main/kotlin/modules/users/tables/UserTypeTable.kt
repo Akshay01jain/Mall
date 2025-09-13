@@ -1,0 +1,13 @@
+package com.sanmati.modules.users
+
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.javatime.CurrentDateTime
+import org.jetbrains.exposed.sql.javatime.datetime
+
+
+object UserTypeTable : Table("userTypeTable") {
+    val id = integer("id").autoIncrement().uniqueIndex()
+    val name = varchar("name", 100).uniqueIndex()
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
+    override val primaryKey = PrimaryKey(id)
+}
