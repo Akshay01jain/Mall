@@ -19,6 +19,7 @@ object UnitController {
 
             val request = call.receive<UnitRequest>()
 
+
             UnitServices.addUnit(request).fold(
                 onSuccess = { response ->
                     call.respondSuccess(
@@ -111,7 +112,11 @@ object UnitController {
 
     suspend fun deleteUnit(call: ApplicationCall) {
         try {
-            val unit_id = call.parameters["id"]!!.toInt()
+            val unit_id = call.request.queryParameters["unit_id"]?.toIntOrNull()
+                ?: return call.respondError(
+                    status = HttpStatusCode.BadRequest,
+                    message = mapOf("error" to "unit_id is missing or invalid").toString()
+                )
 
             UnitServices.deleteUnit(unit_id).fold(
                 onSuccess = { response ->
@@ -122,24 +127,24 @@ object UnitController {
                         is IllegalArgumentException ->
                             call.respondError(
                                 status = HttpStatusCode.BadRequest,
-                                message = "${mapOf(" error " to error.message)}"
+                                message = mapOf("error" to error.message).toString()
                             )
-
                         else ->
                             call.respondError(
                                 status = HttpStatusCode.InternalServerError,
                                 message = "Internal Server Error"
                             )
                     }
-
                 }
             )
-        }catch (e : IllegalArgumentException)
-        {
+
+        } catch (e: Exception) {
+            e.printStackTrace()
             call.respondError(
-                status = HttpStatusCode.BadRequest,
-                message = "${mapOf(" error " to " Invalid request format ")}"
+                status = HttpStatusCode.InternalServerError,
+                message = "Unexpected error: ${e.message}"
             )
         }
     }
+
 }

@@ -10,7 +10,7 @@ jwt:
   audience: "jwt-audience"
   realm: "ktor sample app"
   secret: "zen@01jain"
-  validity : 3600000
+  validity : 604800000
 
 
 postgres:
@@ -18,4 +18,5 @@ postgres:
   driver: "org.postgresql.Driver"
   user: "postgres"
   password : "Root@123"
+
 
