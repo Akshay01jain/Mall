@@ -1,23 +1,26 @@
 package com.sanmati.modules.products.controller
 
-import com.sanmati.modules.products.dto.CategoryRequest
-import com.sanmati.modules.products.services.CategoryServices
+import com.sanmati.modules.products.dto.SubcategoryRequest
+import com.sanmati.modules.products.dto.SubcategoryResponse
+import com.sanmati.modules.products.services.SubcategoryServices
+import com.sanmati.modules.products.tables.SubcategoryTable
 import com.sanmati.utils.respondError
 import com.sanmati.utils.respondSuccess
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.CannotTransformContentToTypeException
 import io.ktor.server.request.receive
-import kotlin.text.toInt
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 
-object CategoryController {
+object SubcategoryController {
 
-    // Add Category
-    suspend fun addCategory(call: ApplicationCall) {
+    // Add Subcategory
+    suspend fun addSubcategory(call: ApplicationCall) {
         try {
-            val request = call.receive<CategoryRequest>()
+            val request = call.receive<SubcategoryRequest>()
 
-            CategoryServices.addCategory(request).fold(
+            SubcategoryServices.addSubcategory(request).fold(
                 onSuccess = { message ->
                     call.respondSuccess(
                         status = HttpStatusCode.OK,
@@ -53,58 +56,84 @@ object CategoryController {
         }
     }
 
-    // Get Categories (optionally search)
-    suspend fun getCategoryList(call: ApplicationCall) {
+    // Get all subcategories OR subcategories by category
+    suspend fun getSubcategories(call: ApplicationCall) {
         try {
-            val searchQuery = call.request.queryParameters["search"]
+            val categoryIdParam = call.request.queryParameters["categoryId"]
 
-            CategoryServices.getCategoryList(searchQuery).fold(
-                onSuccess = { categories ->
-                    call.respondSuccess(
-                        status = HttpStatusCode.OK,
-                        message = "",
-                        data = categories
+            if (categoryIdParam != null) {
+                val categoryId = categoryIdParam.toIntOrNull()
+                    ?: return call.respondError(
+                        status = HttpStatusCode.BadRequest,
+                        message = mapOf("error" to "Invalid category ID").toString()
                     )
-                },
-                onFailure = { error ->
-                    when (error) {
-                        is IllegalArgumentException ->
-                            call.respondError(
-                                status = HttpStatusCode.BadRequest,
-                                message = mapOf("error" to error.message).toString()
-                            )
-                        else ->
-                            call.respondError(
-                                status = HttpStatusCode.InternalServerError,
-                                message = "Internal Server Error"
-                            )
+
+                SubcategoryServices.getSubcategoriesByCategory(categoryId).fold(
+                    onSuccess = { subcategories ->
+                        call.respondSuccess(
+                            status = HttpStatusCode.OK,
+                            message = "",
+                            data = subcategories
+                        )
+                    },
+                    onFailure = { error ->
+                        when (error) {
+                            is IllegalArgumentException ->
+                                call.respondError(
+                                    status = HttpStatusCode.BadRequest,
+                                    message = mapOf("error" to error.message).toString()
+                                )
+                            else ->
+                                call.respondError(
+                                    status = HttpStatusCode.InternalServerError,
+                                    message = "Internal Server Error"
+                                )
+                        }
+                    }
+                )
+            } else {
+                // Optionally, get all subcategories if no categoryId provided
+                val allSubcategories = transaction {
+                    SubcategoryTable.selectAll().map {
+                        SubcategoryResponse(
+                            subcategoryId = it[SubcategoryTable.subcategory_id],
+                            categoryId = it[SubcategoryTable.category_id],
+                            name = it[SubcategoryTable.name],
+                            createdAt = it[SubcategoryTable.createdAt].toString()
+                        )
                     }
                 }
-            )
+
+                call.respondSuccess(
+                    status = HttpStatusCode.OK,
+                    message = "",
+                    data = allSubcategories
+                )
+            }
         } catch (e: Exception) {
             call.respondError(
                 status = HttpStatusCode.BadRequest,
-                message = mapOf("error" to "Invalid request format").toString()
+                message = mapOf("error" to "Invalid request format: ${e.message}").toString()
             )
         }
     }
 
-    // Delete Category (and its subcategories)
-    suspend fun deleteCategory(call: ApplicationCall) {
+    // Delete Subcategory
+    suspend fun deleteSubcategory(call: ApplicationCall) {
         try {
             val idParam = call.request.queryParameters["id"]
                 ?: return call.respondError(
                     status = HttpStatusCode.BadRequest,
-                    message = mapOf("error" to "Missing category ID").toString()
+                    message = mapOf("error" to "Missing subcategory ID").toString()
                 )
 
-            val categoryId = idParam.toIntOrNull()
+            val subcategoryId = idParam.toIntOrNull()
                 ?: return call.respondError(
                     status = HttpStatusCode.BadRequest,
-                    message = mapOf("error" to "Invalid category ID").toString()
+                    message = mapOf("error" to "Invalid subcategory ID").toString()
                 )
 
-            CategoryServices.deleteCategory(categoryId).fold(
+            SubcategoryServices.deleteSubcategory(subcategoryId).fold(
                 onSuccess = { message ->
                     call.respondSuccess(
                         status = HttpStatusCode.OK,

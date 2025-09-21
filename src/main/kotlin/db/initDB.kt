@@ -9,6 +9,7 @@ import com.sanmati.modules.products.tables.ProductPricesTable
 import com.sanmati.modules.products.tables.ProductsTable
 import com.sanmati.modules.products.tables.StockAttributesTable
 import com.sanmati.modules.products.tables.StockTable
+import com.sanmati.modules.products.tables.SubcategoryTable
 import com.sanmati.modules.products.tables.UnitsTable
 import com.sanmati.modules.users.UserTypeTable
 import com.sanmati.modules.users.tables.OtpVerifications
@@ -44,6 +45,7 @@ fun Application.initDB() {
             UserAddressesTable,
             UnitsTable,
             CategoryTable,
+            SubcategoryTable,
             CompanyTable,
             ProductsTable,
             ProductAttributesTable,

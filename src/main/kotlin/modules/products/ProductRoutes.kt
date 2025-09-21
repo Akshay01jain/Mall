@@ -1,9 +1,10 @@
 package com.sanmati.modules.products
 
+import com.sanmati.modules.products.controller.CategoryController
 import com.sanmati.modules.products.controller.CompanyController
 import com.sanmati.modules.products.controller.ProductController
+import com.sanmati.modules.products.controller.SubcategoryController
 import com.sanmati.modules.products.controller.UnitController
-import com.sanmati.modules.products.controller.modules.products.controller.CategoryController
 import io.ktor.server.auth.authenticate
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
@@ -44,16 +45,36 @@ fun Route.productRoutes() {
             }
         }
 
-        route("/category")
-        {
+        route("/category") {
+            // Add Category
             post {
-                CategoryController.addUnit(call)
+                CategoryController.addCategory(call)
             }
+
+            // Get Categories (optionally with search)
             get {
                 CategoryController.getCategoryList(call)
             }
+
+            // Delete Category (and its subcategories)
             delete("/delete") {
                 CategoryController.deleteCategory(call)
+            }
+        }
+
+        route("/subcategory") {
+            // Add Subcategory
+            post {
+                SubcategoryController.addSubcategory(call)
+            }
+
+            get {
+                SubcategoryController.getSubcategories(call)
+            }
+
+            // Delete Subcategory
+            delete("/delete") {
+                SubcategoryController.deleteSubcategory(call)
             }
         }
 
